@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Permainan Mengira Buah - Edisi Pilihan Nombor</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f7f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            user-select: none;
+            flex-direction: column;
+            gap: 20px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .main-wrapper {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* Antaramuka Utama (Bingkai Merah Jambu) */
+        .game-container {
+            width: 320px;
+            background-color: #ffdde2;
+            border-radius: 30px;
+            padding: 20px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        /* Kad Putih Dalaman */
+        .game-card {
+            background-color: #ffffff;
+            border-radius: 20px;
+            padding: 20px;
+            border: 2px solid #ffb6c1;
+            position: relative;
+        }
+
+        .header-info {
+            display: flex;
+            justify-content: space-between;
+            color: #2ec4b6;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .lives {
+            color: #ff4757;
+            font-size: 16px;
+        }
+
+        .timer-bar {
+            width: 100%;
+            background-color: #f1f2f6;
+            height: 8px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+
+        .timer-progress {
+            width: 100%;
+            height: 100%;
+            background-color: #ff4757;
+            transition: width 1s linear;
+        }
+
+        .monkey-section {
+            font-size: 50px;
+            margin: 5px 0;
+        }
+
+        .bubble-text {
+            color: #011627;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            background-color: #f1f2f6;
+            padding: 8px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        /* Grid Paparan Buah (Hanya untuk dilihat, tidak boleh diklik) */
+        .fruit-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-bottom: 25px;
+            min-height: 90px;
+            align-items: center;
+            justify-items: center;
+        }
+
+        .fruit-item {
+            font-size: 36px;
+            pointer-events: none; /* Menghalang user dari klik buah */
+        }
+
+        /* Pilihan Nombor di Bahagian Bawah */
+        .options-section {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .btn-option {
+            background-color: #2ec4b6;
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 15px 0;
+            font-size: 22px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(46, 196, 182, 0.3);
+            transition: transform 0.1s;
+        }
+
+        .btn-option:active {
+            transform: scale(0.95);
+        }
+
+        .btn-option:disabled {
+            background-color: #b2bec3;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* Bahagian Teks Bawah */
+        .instruction-section {
+            margin-top: 15px;
+            color: #1e3799;
+        }
+
+        .instruction-title {
+            font-size: 14px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .instruction-desc {
+            font-size: 12px;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        /* Papan Pendahulu (Leaderboard) */
+        .leaderboard-container {
+            width: 320px;
+            background-color: #ffffff;
+            border-radius: 30px;
+            padding: 20px;
+            border: 3px solid #2ec4b6;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+        }
+
+        .leaderboard-title {
+            color: #2ec4b6;
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 0;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .leaderboard-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #f1f2f6;
+            font-size: 14px;
+        }
+
+        .leaderboard-item:last-child {
+            border-bottom: none;
+        }
+
+        .rank {
+            font-weight: bold;
+            color: #ff9f43;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-wrapper">
+    <!-- BLOK PERMAINAN -->
+    <div class="game-container">
+        <div class="game-card">
+            <div class="header-info">
+                <span id="level-display">Level 1</span>
+                <span id="timer-text" style="color: #ff4757;">20s</span>
+                <span class="lives" id="lives-display">❤️❤️❤️</span>
+            </div>
+
+            <div class="timer-bar">
+                <div class="timer-progress" id="timer-progress"></div>
+            </div>
+
+            <div class="monkey-section" id="character">🐵</div>
+            <div class="bubble-text" id="target-text">Kira jumlah buah sasaran!</div>
+
+            <!-- Paparan Grid Buah -->
+            <div class="fruit-grid" id="fruit-grid"></div>
+
+            <!-- Butang Pilihan Nombor -->
+            <div class="options-section" id="options-container">
+                <button class="btn-option" onclick="checkAnswer(this)">?</button>
+                <button class="btn-option" onclick="checkAnswer(this)">?</button>
+                <button class="btn-option" onclick="checkAnswer(this)">?</button>
+            </div>
+        </div>
+
+        <div class="instruction-section">
+            <div class="instruction-title">MENGHITUNG BUAH</div>
+            <p class="instruction-desc">Lihat arahan ikon, kira jumlahnya dan klik nombor yang betul!</p>
+        </div>
+    </div>
+
+    <!-- BLOK LEADERSHIP BOARD -->
+    <div class="leaderboard-container">
+        <h3 class="leaderboard-title">🏆 Papan Pendahulu</h3>
+        <ul class="leaderboard-list" id="leaderboard-list">
+            <!-- Data dimasukkan oleh JS -->
+        </ul>
+    </div>
+</div>
+
+<script>
+    let currentLevel = 1;
+    let targetCount = 0;
+    let correctAnswer = 0;
+    let lives = 3;
+    let timeLeft = 20;
+    let timerInterval = null;
+    let gameActive = true;
+
+    // Senarai buah-buahan yang akan dipilih secara rawak
+    const fruitPool = [
+        { icon: '🍎', name: 'Epal Merah' },
+        { icon: '🍌', name: 'Pisang' },
+        { icon: '🍇', name: 'Anggur' },
+        { icon: '🍓', name: 'Strawberi' },
+        { icon: '🍊', name: 'Oren' }
+    ];
+
+    const distractorFruit = '🥦'; // Sayur sebagai pengacau data
+
+    function generateLevel() {
+        if (!gameActive) return;
+
+        // Reset Pemasa
+        clearInterval(timerInterval);
+        timeLeft = 20;
+        updateTimerBar();
+
+        document.getElementById('level-display').innerText = `Level ${currentLevel}`;
+        document.getElementById('character').innerText = "🐵";
+        enableOptionButtons(true);
+
+        // Pilih 1 jenis buah sasaran secara rawak untuk level ini
+        const selectedFruit = fruitPool[Math.floor(Math.random() * fruitPool.length)];
+        
+        // Tentukan jumlah buah sasaran (antara 2 hingga 7 biji)
+        correctAnswer = Math.floor(Math.random() * 6) + 2;
+        
+        // Tentukan jumlah sayur pengacau (maksimum slot grid ialah 10)
+        const totalSlots = 10;
+        const totalDistractors = totalSlots - correctAnswer;
+
+        // Kemaskini teks arahan monyet
+        document.getElementById('target-text').innerText = `Berapa banyak ${selectedFruit.icon} yang ada?`;
+
+        // Bina susunan elemen grid
+        let gridArray = [];
+        for (let i = 0; i < correctAnswer; i++) {
+            gridArray.push(selectedFruit.icon);
+        }
+        for (let i = 0; i < totalDistractors; i++) {
+            gridArray.push(distractorFruit);
+        }
+
+        // Rompak kedudukan buah secara rawak
+        gridArray.sort(() => Math.random() - 0.5);
+
+        // Paparkan buah ke dalam grid HTML
+        const gridContainer = document.getElementById('fruit-grid');
+        gridContainer.innerHTML = '';
+        gridArray.forEach(icon => {
+            const div = document.createElement('div');
+            div.className = 'fruit-item';
+            div.innerText = icon;
+            gridContainer.appendChild(div);
+        });
+
+        // Jana 3 pilihan nombor (1 betul, 2 salah)
+        generateOptions(correctAnswer);
+
+        // Mulakan pemasa
+        startTimer();
+    }
+
+    // Fungsi menjana butang pilihan jawapan
+    function generateOptions(correctNum) {
+        let options = [correctNum];
+
+        // Janakan dua nombor salah yang berhampiran secara rawak
+        while (options.length < 3) {
+            let wrongNum = correctNum + (Math.floor(Math.random() * 5) - 2); // Cth: jawapan -2 hingga +2
+            if (wrongNum >= 0 && wrongNum <= 10 && !options.includes(wrongNum)) {
+                options.push(wrongNum);
+            }
+        }
+
+        // Susun rawak kedudukan 3 nombor tersebut pada butang
+        options.sort(() => Math.random() - 0.5);
+
+        const buttons = document.querySelectorAll('.btn-option');
+        buttons.forEach((btn, index) => {
+            btn.innerText = options[index];
+        });
+    }
+
+    function startTimer() {
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            updateTimerBar();
+
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                document.getElementById('character').innerText = "⏰";
+                deductLife("Masa tamat! ⏰");
+            }
+        }, 1000);
+    }
+
+    function updateTimerBar() {
+        document.getElementById('timer-text').innerText = `${timeLeft}s`;
+        const percentage = (timeLeft / 20) * 100;
+        document.getElementById('timer-progress').style.width = `${percentage}%`;
+    }
+
+    function enableOptionButtons(enable) {
+        const buttons = document.querySelectorAll('.btn-option');
+        buttons.forEach(btn => btn.disabled = !enable);
+    }
+
+    // Fungsi semak jawapan apabila butang nombor ditekan
+    function checkAnswer(buttonElement) {
+        if (!gameActive) return;
+        clearInterval(timerInterval);
+        enableOptionButtons(false);
+
+        const chosenAnswer = parseInt(buttonElement.innerText);
+
+        if (chosenAnswer === correctAnswer) {
+            document.getElementById('character').innerText = "🍌"; // Monyet dapat pisang gembira
+            setTimeout(() => {
+                alert("Betul tepat sekali! 🎉 Sedia untuk Level seterusnya!");
+                currentLevel++;
+                generateLevel();
+            }, 100);
+        } else {
+            document.getElementById('character').innerText = "🙈"; // Monyet tutup mata malu/salah
+            setTimeout(() => {
+                deductLife(`Salah! Jawapan sebenar ialah ${correctAnswer}.`);
+            }, 100);
+        }
+    }
+
+    function deductLife(reasonMessage) {
+        lives--;
+        updateLivesDisplay();
+
+        if (lives <= 0) {
+            gameOver();
+        } else {
+            alert(`${reasonMessage}\nNyawa berkurang! Baki nyawa: ${lives}`);
+            generateLevel();
+        }
+    }
+
+    function updateLivesDisplay() {
+        let heartString = "";
+        for (let i = 0; i < 3; i++) {
+            heartString += (i < lives) ? "❤️" : "🖤";
+        }
+        document.getElementById('lives-display').innerText = heartString;
+    }
+
+    function gameOver() {
+        gameActive = false;
+        clearInterval(timerInterval);
+        enableOptionButtons(false);
+        document.getElementById('character').innerText = "💥";
+        
+        const finalScore = currentLevel - 1;
+        alert(`GAME OVER! 😭\nAnda berjaya menjawab ${finalScore} tahap.`);
+
+        const playerName = prompt("Masukkan nama anda untuk papan pendahulu:") || "Pemain Misteri";
+        saveLeaderboard(playerName, finalScore);
+        displayLeaderboard();
+
+        if (confirm("Mahu main semula?")) {
+            currentLevel = 1;
+            lives = 3;
+            gameActive = true;
+            updateLivesDisplay();
+            generateLevel();
+        }
+    }
+
+    function saveLeaderboard(name, score) {
+        let scores = JSON.parse(localStorage.getItem('fruit_scores')) || [];
+        scores.push({ name: name, score: score, date: new Date().toLocaleDateString() });
+        scores.sort((a, b) => b.score - a.score);
+        scores = scores.slice(0, 5);
+        localStorage.setItem('fruit_scores', JSON.stringify(scores));
+    }
+
+    function displayLeaderboard() {
+        const scores = JSON.parse(localStorage.getItem('fruit_scores')) || [];
+        const listContainer = document.getElementById('leaderboard-list');
+        listContainer.innerHTML = '';
+
+        if (scores.length === 0) {
+            listContainer.innerHTML = '<li style="text-align:center; color:#b2bec3; padding:10px;">Tiada rekod lagi</li>';
+            return;
+        }
+
+        scores.forEach((entry, index) => {
+            const li = document.createElement('li');
+            li.className = 'leaderboard-item';
+            li.innerHTML = `
+                <div><span class="rank">#${index + 1}</span>${entry.name}</div>
+                <strong>Lv. ${entry.score}</strong>
+            `;
+            listContainer.appendChild(li);
+        });
+    }
+
+    // Jalankan sistem permulaan
+    displayLeaderboard();
+    generateLevel();
+</script>
